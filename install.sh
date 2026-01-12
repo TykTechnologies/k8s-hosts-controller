@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Usage: curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
+#
+# Or install specific version:
+#   VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
 
 # Copyright The Tyk Authors.
 # Licensed under Apache 2.0
@@ -9,7 +12,6 @@
 : ${VERSION:="v0.2.0"}  # Auto-updated during release - DO NOT EDIT MANUALLY
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${USE_SUDO:="true"}
-: ${VERIFY_CHECKSUM:="true"}
 : ${TMP_DIR:="/tmp"}
 
 # Script version and info
@@ -17,16 +19,24 @@ REPO="TykTechnologies/k8s-hosts-controller"
 
 HAS_CURL=false
 HAS_WGET=false
-HAS_OPENSSL=false
-TAG=""
 OS=""
 ARCH=""
+
+# log prints a message to stdout
+log() {
+  echo "$@"
+}
+
+# fatal prints an error message and exits
+fatal() {
+  echo "Error: $@" >&2
+  exit 1
+}
 
 # detectTools checks which tools are available
 detectTools() {
   HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
   HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
-  HAS_OPENSSL="$(type "openssl" &> /dev/null && echo true || echo false)"
 }
 
 # initArch discovers the architecture for this system
@@ -69,33 +79,6 @@ verifySupported() {
     echo "Either curl or wget is required"
     exit 1
   fi
-
-  if [ "${VERIFY_CHECKSUM}" == "true" ] && [ "${HAS_OPENSSL}" != "true" ]; then
-    echo "Checksum verification requires openssl"
-    echo "Install openssl or set VERIFY_CHECKSUM=false"
-    exit 1
-  fi
-}
-
-# getLatestVersion fetches the latest release version from GitHub API
-getLatestVersion() {
-  local latest_url="https://api.github.com/repos/${REPO}/releases/latest"
-  local latest_response=""
-
-  if [ "${HAS_CURL}" == "true" ]; then
-    latest_response=$(curl -s --fail "$latest_url" 2>&1) || true
-  elif [ "${HAS_WGET}" == "true" ]; then
-    latest_response=$(wget -q -O - "$latest_url" 2>&1) || true
-  fi
-
-  TAG=$(echo "$latest_response" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-
-  if [ -z "$TAG" ]; then
-    echo "Could not retrieve latest version from GitHub"
-    exit 1
-  fi
-
-  echo "Latest version: $TAG"
 }
 
 # runAsRoot runs command as root if needed
@@ -104,6 +87,41 @@ runAsRoot() {
     sudo "${@}"
   else
     "${@}"
+  fi
+}
+
+# checkHttpCode checks if URL returns 200 OK
+checkHttpCode() {
+  local url="$1"
+  local http_code=""
+
+  if [[ -n "${HAS_CURL:-}" ]]; then
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+  elif [[ -n "${HAS_WGET:-}" ]]; then
+    http_code=$(wget -spider -S "$url" 2>&1 | grep "HTTP/" | awk '{print $2}' | tail -1)
+  else
+    return 1
+  fi
+
+  [[ "$http_code" == "200" ]]
+}
+
+# verifyReleaseAsset checks if the release asset exists before attempting download
+verifyReleaseAsset() {
+  local version="$1"
+  local filename="${BINARY_NAME}-${version}-${OS}-${ARCH}.tar.gz"
+  local release_url="https://github.com/${REPO}/releases/download/${version}/${filename}"
+
+  log "Verifying release asset exists: $filename"
+
+  if ! checkHttpCode "$release_url"; then
+    fatal "Release asset not found: $filename
+
+Available versions: https://github.com/${REPO}/releases
+
+You can specify a different version:
+  VERSION=v0.1.0 ./install.sh
+"
   fi
 }
 
@@ -141,8 +159,8 @@ detectInstallDir() {
 
 # downloadFile downloads the binary package
 downloadFile() {
-  local filename="${BINARY_NAME}-${TAG}-${OS}-${ARCH}.tar.gz"
-  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${filename}"
+  local filename="${BINARY_NAME}-${VERSION}-${OS}-${ARCH}.tar.gz"
+  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${filename}"
 
   echo "Downloading $DOWNLOAD_URL"
 
@@ -253,7 +271,7 @@ main() {
   initArch
   initOS
   verifySupported
-  getLatestVersion
+  verifyReleaseAsset "$VERSION"
   detectInstallDir
 
   checkInstalledVersion || true
