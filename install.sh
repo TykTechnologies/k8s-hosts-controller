@@ -24,12 +24,12 @@ ARCH=""
 
 # log prints a message to stdout
 log() {
-  echo "$@"
+  echo "$*"
 }
 
 # fatal prints an error message and exits
 fatal() {
-  echo "Error: $@" >&2
+  echo "Error: $*" >&2
   exit 1
 }
 
@@ -109,7 +109,7 @@ checkHttpCode() {
 # verifyReleaseAsset checks if the release asset exists before attempting download
 verifyReleaseAsset() {
   local version="$1"
-  local filename="${BINARY_NAME}-${version}-${OS}-${ARCH}.tar.gz"
+  local filename="${BINARY_NAME}_${version}_${OS}_${ARCH}.tar.gz"
   local release_url="https://github.com/${REPO}/releases/download/${version}/${filename}"
 
   log "Verifying release asset exists: $filename"
@@ -159,7 +159,7 @@ detectInstallDir() {
 
 # downloadFile downloads the binary package
 downloadFile() {
-  local filename="${BINARY_NAME}-${VERSION}-${OS}-${ARCH}.tar.gz"
+  local filename="${BINARY_NAME}_${VERSION}_${OS}_${ARCH}.tar.gz"
   DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${filename}"
 
   echo "Downloading $DOWNLOAD_URL"
