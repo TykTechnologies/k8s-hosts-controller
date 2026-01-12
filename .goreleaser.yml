@@ -61,5 +61,5 @@ release:
     owner: TykTechnologies
     name: k8s-hosts-controller
   draft: false
-  prerelease: auto
+  prerelease: false
   name_template: "{{.ProjectName}} v{{.Version}}"
