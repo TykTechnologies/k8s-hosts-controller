@@ -62,4 +62,4 @@ release:
     name: k8s-hosts-controller
   draft: false
   prerelease: false
-  name_template: "{{.ProjectName}} v{{.Version}}"
+  name_template: "{{.Version}}"
