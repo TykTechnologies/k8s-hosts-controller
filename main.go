@@ -23,6 +23,14 @@ import (
 	"github.com/TykTechnologies/k8s-hosts-controller/pkg/hosts"
 )
 
+// Build information populated by GoReleaser via ldflags
+var (
+	version   = "dev"
+	commit    = "none"
+	date      = "unknown"
+	builtBy   = "local"
+)
+
 var scheme = runtime.NewScheme()
 
 func init() {
