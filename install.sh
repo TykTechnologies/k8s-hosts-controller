@@ -13,7 +13,7 @@
 
 # Configuration with environment variable overrides
 : ${BINARY_NAME:="k8s-hosts-controller"}
-: ${VERSION:="v0.2.0"}  # Auto-updated during release - DO NOT EDIT MANUALLY
+: ${VERSION:="v0.0.1-beta.5"}  # Auto-updated during release - DO NOT EDIT MANUALLY
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${USE_SUDO:="true"}
 
