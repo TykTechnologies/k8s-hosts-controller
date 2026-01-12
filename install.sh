@@ -12,7 +12,6 @@
 : ${VERSION:="v0.2.0"}  # Auto-updated during release - DO NOT EDIT MANUALLY
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${USE_SUDO:="true"}
-: ${TMP_DIR:="/tmp"}
 
 # Script version and info
 REPO="TykTechnologies/k8s-hosts-controller"
