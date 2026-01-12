@@ -254,10 +254,8 @@ checkInstalledVersion() {
     if [[ -n "$version" ]]; then
       echo "$BINARY_NAME $version is already installed"
       echo "Reinstalling..."
-      return 1
     fi
   fi
-  return 0
 }
 
 main() {
@@ -273,7 +271,7 @@ main() {
   verifyReleaseAsset "$VERSION"
   detectInstallDir
 
-  checkInstalledVersion || true
+  checkInstalledVersion
 
   downloadFile
   installFile
