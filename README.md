@@ -14,6 +14,20 @@ This controller eliminates port-forwards by watching Ingress resources in specif
 
 > The controller requires `sudo` access in order to writing to `/etc/hosts`.
 
+## Installation
+
+### Quick Install (Latest Release)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
+```
+
+### Install Specific Version
+
+```bash
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
+```
+
 ## Usage
 
 ### Build
