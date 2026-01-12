@@ -3,20 +3,20 @@
 ## Prerequisites
 
 1. Install GoReleaser:
-   ```bash
-   go install github.com/goreleaser/goreleaser/v2@latest
-   ```
+```bash
+go install github.com/goreleaser/goreleaser/v2@latest
+```
 
 2. Create a GitHub tag:
-   ```bash
-   git tag -a v1.0.0 -m "Release v1.0.0"
-   git push origin v1.0.0
-   ```
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
 
 3. Ensure GitHub token is set:
-   ```bash
-   export GITHUB_TOKEN=$(gh auth token)
-   ```
+```bash
+export GITHUB_TOKEN=$(gh auth token)
+```
 
 ## Creating a Release
 
@@ -66,3 +66,4 @@ Binaries built with goreleaser include embedded version information:
 - `builtBy`: Build tool (e.g., "goreleaser")
 
 Local builds have default values (version="dev", commit="none", etc.).
+
