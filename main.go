@@ -45,6 +45,7 @@ type Config struct {
 	Marker        string
 	Cleanup       bool
 	Verbose       bool
+	Version       bool
 }
 
 func parseFlags() Config {
@@ -55,6 +56,7 @@ func parseFlags() Config {
 		marker        string
 		cleanup       bool
 		verbose       bool
+		showVersion   bool
 	)
 
 	flag.StringVar(&namespaces, "namespaces", "", "Comma-separated namespaces to watch")
@@ -63,6 +65,7 @@ func parseFlags() Config {
 	flag.StringVar(&marker, "marker", "TYK-K8S-HOSTS", "Marker for managed entries")
 	flag.BoolVar(&cleanup, "cleanup", false, "Remove all managed entries and exit")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
+	flag.BoolVar(&showVersion, "version", false, "Print version information and exit")
 	flag.Parse()
 
 	var nsList []string
@@ -82,6 +85,7 @@ func parseFlags() Config {
 		Marker:        marker,
 		Cleanup:       cleanup,
 		Verbose:       verbose,
+		Version:       showVersion,
 	}
 }
 
@@ -148,6 +152,13 @@ func run(ctx context.Context, cfg Config) error {
 	return nil
 }
 
+func printVersion() {
+	fmt.Printf("k8s-hosts-controller %s\n", version)
+	fmt.Printf("  commit: %s\n", commit)
+	fmt.Printf("  built at: %s\n", date)
+	fmt.Printf("  built by: %s\n", builtBy)
+}
+
 // cleanupRunnable implements manager.Runnable to ensure cleanup happens
 // after manager shutdown completes (all reconcilers drained).
 type cleanupRunnable struct {
@@ -178,8 +189,22 @@ func (c *cleanupRunnable) Start(ctx context.Context) error {
 func main() {
 	cfg := parseFlags()
 
+	// Handle --version flag
+	if cfg.Version {
+		printVersion()
+		os.Exit(0)
+	}
+
 	ctrl.SetLogger(zap.New(zap.UseDevMode(cfg.Verbose)))
 	log := ctrl.Log.WithName("main")
+
+	// Log version information as first log
+	log.Info("Starting k8s-hosts-controller",
+		"version", version,
+		"commit", commit,
+		"builtAt", date,
+		"builtBy", builtBy,
+	)
 
 	ctx := ctrl.SetupSignalHandler()
 
