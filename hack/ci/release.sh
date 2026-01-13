@@ -54,7 +54,6 @@ else
   rm "$INSTALL_SH".bak
 fi
 
-
 git add "$INSTALL_SH"
 git commit -m "release: update install.sh to $VERSION"
 echo "Created commit: $(git rev-parse --short HEAD)"

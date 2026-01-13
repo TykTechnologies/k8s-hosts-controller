@@ -20,10 +20,6 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-echo "cutting release for $VERSION"
-
-exit 0
-
 REPO="TykTechnologies/k8s-hosts-controller"
 
 HAS_CURL=false
@@ -31,9 +27,13 @@ HAS_WGET=false
 OS=""
 ARCH=""
 
-log() { echo "$*" }
+log() {
+    echo "$*"
+}
 
-warn() { echo "Warning: $*" >&2 }
+warn() {
+    echo "Warning: $*" >&2
+}
 
 fatal() {
   echo "Error: $*" >&2
