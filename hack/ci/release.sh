@@ -43,10 +43,6 @@ if gh release view "$VERSION" --repo "$REPO" &> /dev/null; then
 fi
 
 CURRENT_VERSION=$(grep 'readonly _version_=' "$INSTALL_SH" | sed -E 's/.*_version_="([^"]*)".*/\1/')
-if [ -z "$CURRENT_VERSION" ]; then
-  echo "Error: Could not find current version in $INSTALL_SH"
-  exit 1
-fi
 
 echo $CURRENT_VERSION
 
@@ -54,9 +50,10 @@ if [ "$VERSION" = "$CURRENT_VERSION" ]; then
   echo "install.sh already at version $VERSION"
 else
   echo "Updating install.sh from $CURRENT_VERSION to $VERSION"
-  sed -i.bak "s/readonly _version_=\".*\"/readonly _version_=\"$NEW_VERSION\"/" "$INSTALL_SH"
+  sed -i.bak "s/readonly _version_=\".*\"/readonly _version_=\"$VERSION\"/" "$INSTALL_SH"
   rm "$INSTALL_SH".bak
 fi
+
 
 git add "$INSTALL_SH"
 git commit -m "release: update install.sh to $VERSION"
