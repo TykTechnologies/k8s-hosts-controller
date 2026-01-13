@@ -19,13 +19,13 @@ This controller eliminates port-forwards by watching Ingress resources in specif
 ### Quick Install (Latest Release)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/hack/install.sh | bash
 ```
 
 ### Install Specific Version
 
 ```bash
-VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/hack/install.sh | bash
 ```
 
 ## Usage
@@ -96,3 +96,26 @@ Run the controller with sudo:
 ```bash
 sudo ./k8s-hosts-controller --namespaces tyk
 ```
+
+## Release Process
+
+To create a new release:
+
+1. Ensure `gh` CLI is installed and authenticated
+2. Run the release preparation script:
+   ```bash
+   ./hack/ci/release.sh v0.1.0
+   ```
+   For pre-releases:
+   ```bash
+   ./hack/ci/release.sh v0.1.0-beta.4
+   ```
+
+The script will:
+- Validate the version format
+- Check if the tag already exists
+- Update `hack/install.sh` with the new version
+- Create a commit and tag
+- Push to GitHub
+
+The GitHub Actions workflow will automatically build and publish the release.

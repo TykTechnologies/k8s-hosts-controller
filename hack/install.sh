@@ -8,16 +8,15 @@
 #   export VERSION=v0.1.0
 #   curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
 
-# Copyright The Tyk Authors.
-# Licensed under Apache 2.0
+readonly _version_=""
 
-# Configuration with environment variable overrides
 : ${BINARY_NAME:="k8s-hosts-controller"}
-: ${VERSION:="v0.2.0"}  # Auto-updated during release - DO NOT EDIT MANUALLY
+: ${VERSION:=$_version_}  # Auto-updated during release - DO NOT EDIT MANUALLY
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${USE_SUDO:="true"}
 
-# Script version and info
+exit 0
+
 REPO="TykTechnologies/k8s-hosts-controller"
 
 HAS_CURL=false
@@ -25,17 +24,10 @@ HAS_WGET=false
 OS=""
 ARCH=""
 
-# log prints a message to stdout
-log() {
-  echo "$*"
-}
+log() { echo "$*" }
 
-# warn prints a warning message
-warn() {
-  echo "Warning: $*" >&2
-}
+warn() { echo "Warning: $*" >&2 }
 
-# fatal prints an error message and exits
 fatal() {
   echo "Error: $*" >&2
   exit 1
