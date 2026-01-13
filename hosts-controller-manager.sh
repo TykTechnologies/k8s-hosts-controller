@@ -36,9 +36,20 @@ is_controller_running() {
   pgrep -f "k8s-hosts-controller" > /dev/null 2>&1
 }
 
-# get_controller_pid returns the PID of running controller or empty string
+# get_controller_pid returns space-separated PIDs of running controller or empty string
 get_controller_pid() {
-  pgrep -f "k8s-hosts-controller" 2> /dev/null || echo ""
+  pgrep -f "k8s-hosts-controller" 2> /dev/null | tr '\n' ' ' || echo ""
+}
+
+# any_process_alive checks if ANY of the given space-separated PIDs is still alive
+any_process_alive() {
+  local pids="$1"
+  for pid in $pids; do
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2> /dev/null; then
+      return 0  # At least one process is alive
+    fi
+  done
+  return 1  # All processes are dead
 }
 
 # start_controller starts the controller in background
@@ -92,6 +103,9 @@ stop_controller() {
     pid=$(get_controller_pid)
   fi
 
+  # Trim trailing spaces early to catch whitespace-only edge case
+  pid=$(echo "$pid" | sed 's/[[:space:]]*$//')
+
   if [[ -z "$pid" ]]; then
     log "No controller running, nothing to stop"
     return 0
@@ -100,22 +114,35 @@ stop_controller() {
   log "Stopping controller (PID: $pid)..."
 
   # Try graceful shutdown first
-  if kill -0 "$pid" 2> /dev/null; then
-    sudo kill "$pid" 2> /dev/null || true
+  if any_process_alive "$pid"; then
+    if ! sudo kill $pid 2> /dev/null; then
+      err "Failed to send SIGTERM to process(es): $pid"
+      err "=== MANUAL CLEANUP REQUIRED ==="
+      err "Run: sudo kill -9 $pid"
+      err "================================"
+      return 1
+    fi
 
     local count=0
-    while kill -0 "$pid" 2> /dev/null && [[ $count -lt "$GRACEFUL_SHUTDOWN_TIMEOUT" ]]; do
+    while any_process_alive "$pid" && [[ $count -lt "$GRACEFUL_SHUTDOWN_TIMEOUT" ]]; do
       sleep 1
       count=$((count + 1))
     done
 
-    if kill -0 "$pid" 2> /dev/null; then
+    if any_process_alive "$pid"; then
       warning "Controller did not stop gracefully, forcing..."
-      sudo kill -9 "$pid" 2> /dev/null || true
+      if ! sudo kill -9 $pid 2> /dev/null; then
+        err "Failed to force kill process(es): $pid"
+        err "=== MANUAL CLEANUP REQUIRED ==="
+        err "Run: sudo kill -9 $pid"
+        err "================================"
+        return 1
+      fi
     fi
   fi
 
   log "Controller stopped"
+  return 0
 }
 
 # cleanup_hosts removes all controller-managed entries from /etc/hosts
@@ -172,7 +199,7 @@ main() {
       ;;
     stop)
       check_sudo || exit 1
-      stop_controller
+      stop_controller || exit 1
       ;;
     cleanup)
       check_sudo || exit 1
