@@ -6,7 +6,7 @@ CONTROLLER_PID=""
 ###############
 # configuration
 ###############
-CONTROLLER_BINARY="${CONTROLLER_BINARY:-./k8s-hosts-controller}"
+CONTROLLER_BINARY="${CONTROLLER_BINARY:-k8s-hosts-controller}"
 HOSTS_MARKER="${HOSTS_MARKER:-TYK-K8S-HOSTS}"
 LOG_FILE="${LOG_FILE:-/tmp/k8s-hosts-controller.log}"
 NAMESPACES="${NAMESPACES:-}"
@@ -67,8 +67,8 @@ start_controller() {
   log "  Command: ${cmd[*]}"
   log "  Log file: $LOG_FILE"
 
-  # Start controller in background with sudo
-  sudo "${cmd[@]}" > "$LOG_FILE" 2>&1 &
+  # Start controller in background with sudo, immune to SIGHUP (works on macOS and Linux)
+  sudo nohup "${cmd[@]}" > "$LOG_FILE" 2>&1 &
   CONTROLLER_PID=$!
 
   # Wait and verify it started successfully
@@ -158,8 +158,8 @@ main() {
   local action="${1:-start}"
   local namespaces="${2:-$NAMESPACES}"
 
-  # Validate controller binary exists
-  if [[ ! -f "$CONTROLLER_BINARY" ]]; then
+  # Validate controller binary exists (checks both file paths and PATH)
+  if [[ ! -f "$CONTROLLER_BINARY" ]] && ! command -v "$CONTROLLER_BINARY" &> /dev/null; then
     err "Controller binary not found: $CONTROLLER_BINARY"
     exit 1
   fi
