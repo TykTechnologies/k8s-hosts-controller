@@ -8,7 +8,7 @@
 #   export VERSION=v0.1.0
 #   curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
 
-readonly _version_="v0.0.1-beta.6"
+readonly _version_="v0.0.1-beta.7"
 
 : ${BINARY_NAME:="k8s-hosts-controller"}
 : ${VERSION:=$_version_}  # Auto-updated during release - DO NOT EDIT MANUALLY
@@ -19,6 +19,8 @@ if [ -z "$VERSION" ]; then
   echo "Error: Could not find current version"
   exit 1
 fi
+
+echo "cutting release for $VERSION"
 
 exit 0
 
