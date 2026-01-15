@@ -10,7 +10,7 @@ CONTROLLER_BINARY="${CONTROLLER_BINARY:-k8s-hosts-controller}"
 HOSTS_MARKER="${HOSTS_MARKER:-TYK-K8S-HOSTS}"
 LOG_FILE="${LOG_FILE:-/tmp/k8s-hosts-controller.log}"
 NAMESPACES="${NAMESPACES:-}"
-GRACEFUL_SHUTDOWN_TIMEOUT=5
+GRACEFUL_SHUTDOWN_TIMEOUT=30
 STARTUP_WAIT_TIME=2
 
 log() { echo "[INFO] $*" >&2; }
@@ -78,11 +78,9 @@ start_controller() {
   log "  Command: ${cmd[*]}"
   log "  Log file: $LOG_FILE"
 
-  # Start controller in background with sudo, immune to SIGHUP (works on macOS and Linux)
   sudo nohup "${cmd[@]}" > "$LOG_FILE" 2>&1 &
   CONTROLLER_PID=$!
 
-  # Wait and verify it started successfully
   sleep "$STARTUP_WAIT_TIME"
 
   if ! kill -0 "$CONTROLLER_PID" 2> /dev/null; then
@@ -103,7 +101,6 @@ stop_controller() {
     pid=$(get_controller_pid)
   fi
 
-  # Trim trailing spaces early to catch whitespace-only edge case
   pid=$(echo "$pid" | sed 's/[[:space:]]*$//')
 
   if [[ -z "$pid" ]]; then
@@ -113,7 +110,6 @@ stop_controller() {
 
   log "Stopping controller (PID: $pid)..."
 
-  # Try graceful shutdown first
   if any_process_alive "$pid"; then
     if ! sudo kill $pid 2> /dev/null; then
       err "Failed to send SIGTERM to process(es): $pid"
@@ -124,6 +120,7 @@ stop_controller() {
     fi
 
     local count=0
+    log "Waiting $GRACEFUL_SHUTDOWN_TIMEOUT seconds until processes are gracefully shutdown"
     while any_process_alive "$pid" && [[ $count -lt "$GRACEFUL_SHUTDOWN_TIMEOUT" ]]; do
       sleep 1
       count=$((count + 1))
@@ -193,13 +190,20 @@ main() {
 
   case "$action" in
     start)
-      check_sudo || exit 1
-      start_controller "$namespaces" || exit 1
+      check_sudo
+      start_controller "$namespaces"
       log "Controller is ready"
       ;;
     stop)
-      check_sudo || exit 1
+      check_sudo
       stop_controller || exit 1
+      ;;
+    restart)
+      check_sudo
+      log "Restarting controller..."
+      stop_controller
+      start_controller "$namespaces"
+      log "Controller restarted successfully"
       ;;
     cleanup)
       check_sudo || exit 1
@@ -209,12 +213,13 @@ main() {
       show_status
       ;;
     *)
-      echo "Usage: $0 {start|stop|cleanup|status} [namespaces]"
+      echo "Usage: $0 {start|stop|restart|cleanup|status} [namespaces]"
       echo ""
       echo "Examples:"
       echo "  $0 start tyk,tyk-dp-1,tyk-dp-2"
       echo "  $0 start"
       echo "  $0 stop"
+      echo "  $0 restart"
       echo "  $0 cleanup"
       echo "  $0 status"
       exit 1
