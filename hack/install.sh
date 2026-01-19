@@ -8,7 +8,7 @@
 #   export VERSION=v0.1.0
 #   curl -fsSL https://raw.githubusercontent.com/TykTechnologies/k8s-hosts-controller/main/install.sh | bash
 
-readonly _version_="v0.0.1-beta.10"
+readonly _version_="v0.0.1-beta.11"
 
 : ${BINARY_NAME:="k8s-hosts-controller"}
 : ${VERSION:=$_version_}  # Auto-updated during release - DO NOT EDIT MANUALLY
