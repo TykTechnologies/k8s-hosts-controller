@@ -78,7 +78,12 @@ start_controller() {
   log "  Command: ${cmd[*]}"
   log "  Log file: $LOG_FILE"
 
-  sudo nohup "${cmd[@]}" > "$LOG_FILE" 2>&1 &
+  # Determine kubeconfig path to pass to sudo
+  # When running with sudo, HOME changes, so we need to explicitly pass KUBECONFIG
+  local kubeconfig_path="${KUBECONFIG:-${HOME}/.kube/config}"
+
+  # Pass KUBECONFIG to sudo so the controller can access the kubeconfig
+  sudo KUBECONFIG="$kubeconfig_path" nohup "${cmd[@]}" > "$LOG_FILE" 2>&1 &
   CONTROLLER_PID=$!
 
   sleep "$STARTUP_WAIT_TIME"
@@ -145,7 +150,11 @@ stop_controller() {
 # cleanup_hosts removes all controller-managed entries from /etc/hosts
 cleanup_hosts() {
   log "Cleaning up /etc/hosts entries..."
-  if ! sudo "$CONTROLLER_BINARY" --cleanup; then
+
+  # Determine kubeconfig path to pass to sudo
+  local kubeconfig_path="${KUBECONFIG:-${HOME}/.kube/config}"
+
+  if ! sudo KUBECONFIG="$kubeconfig_path" "$CONTROLLER_BINARY" --cleanup; then
     err "Failed to cleanup /etc/hosts"
     return 1
   fi
